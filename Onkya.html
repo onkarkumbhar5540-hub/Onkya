@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Game with Scrolling Road</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #e4e4e4;
+        }
+        canvas {
+            display: block;
+            background-color: #87CEEB;
+            margin: 0 auto;
+            position: absolute;
+            top: 0; bottom: 0; left: 0; right: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas size to full screen
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Car object
+        const carWidth = 50;
+        const carHeight = 100;
+        let carX = (canvas.width - carWidth) / 2; // Start in the middle of the screen
+        let carY = canvas.height - carHeight - 20; // Position at the bottom of the canvas
+        const carSpeed = 7;
+
+        // Road variables
+        const roadWidth = 200;
+        const roadHeight = canvas.height;
+        let roadY1 = 0;
+        let roadY2 = -roadHeight;
+
+        // Obstacle variables
+        const obstacles = [];
+        const obstacleWidth = 50;
+        const obstacleHeight = 100;
+        const obstacleSpeed = 5;
+
+        // Game variables
+        let isGameOver = false;
+
+        // Handle keyboard controls
+        let leftPressed = false;
+        let rightPressed = false;
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") {
+                leftPressed = true;
+            } else if (e.key === "ArrowRight") {
+                rightPressed = true;
+            }
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowLeft") {
+                leftPressed = false;
+            } else if (e.key === "ArrowRight") {
+                rightPressed = false;
+            }
+        });
+
+        // Create obstacles
+        function generateObstacles() {
+            const obstacleX = Math.random() * (canvas.width - obstacleWidth);
+            obstacles.push({ x: obstacleX, y: -obstacleHeight });
+        }
+
+        // Move obstacles
+        function moveObstacles() {
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].y += obstacleSpeed;
+
+                // Remove obstacle if it goes out of the screen
+                if (obstacles[i].y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    i--;
+                }
+
+                // Check for collision with the car
+                if (
+                    carX < obstacles[i].x + obstacleWidth &&
+                    carX + carWidth > obstacles[i].x &&
+                    carY < obstacles[i].y + obstacleHeight &&
+                    carY + carHeight > obstacles[i].y
+                ) {
+                    isGameOver = true;
+                }
+            }
+        }
+
+        // Draw the road
+        function drawRoad() {
+            ctx.fillStyle = "#444"; // Dark grey for the road
+            ctx.fillRect((canvas.width - roadWidth) / 2, roadY1, roadWidth, roadHeight);
+            ctx.fillRect((canvas.width - roadWidth) / 2, roadY2, roadWidth, roadHeight);
+        }
+
+        // Draw the car
+        function drawCar() {
+            ctx.fillStyle = "#FF5733"; // Car color
+            ctx.fillRect(carX, carY, carWidth, carHeight);
+        }
+
+        // Draw obstacles
+        function drawObstacles() {
+            ctx.fillStyle = "#333";
+            for (const obstacle of obstacles) {
+                ctx.fillRect(obstacle.x, obstacle.y, obstacleWidth, obstacleHeight);
+            }
+        }
+
+        // Draw game over message
+        function drawGameOver() {
+            ctx.fillStyle = "#000";
+            ctx.font = "50px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+        }
+
+        // Update the game
+        function update() {
+            if (isGameOver) {
+                drawGameOver();
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+
+            // Move the road
+            roadY1 += obstacleSpeed;
+            roadY2 += obstacleSpeed;
+
+            if (roadY1 > canvas.height) roadY1 = -roadHeight;
+            if (roadY2 > canvas.height) roadY2 = -roadHeight;
+
+            // Move the car based on user input
+            if (leftPressed && carX > (canvas.width - roadWidth) / 2) {
+                carX -= carSpeed;
+            }
+            if (rightPressed && carX < (canvas.width + roadWidth) / 2 - carWidth) {
+                carX += carSpeed;
+            }
+
+            moveObstacles();
+            drawRoad();
+            drawCar();
+            drawObstacles();
+
+            // Generate new obstacles
+            if (Math.random() < 0.01) {
+                generateObstacles();
+            }
+
+            requestAnimationFrame(update); // Repeat the update
+        }
+
+        // Start the game
+        update();
+    </script>
+</body>
+</html>
